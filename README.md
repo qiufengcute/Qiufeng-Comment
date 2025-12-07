@@ -1,4 +1,5 @@
 # Qiufeng-Comment
+[![License](https://img.shields.io/badge/dynamic/json?url=https://api.github.com/repos/qiufengcute/EasySearch&query=$.license.spdx_id&label=License&color=8B5CF6&logoColor=white)](LICENSE)
 ## 📋 关于
 
 秋风评论系统是基于 [Giscus](https://giscus.app/) 构建的评论解决方案。
