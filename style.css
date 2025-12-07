@@ -40,12 +40,31 @@ body {
     font-weight: 300;
 }
 
-/* 主面板 */
-.dashboard {
-    display: grid;
-    grid-template-columns: 1fr 350px;
-    gap: 30px;
-    margin-bottom: 40px;
+.giscus-container {
+    min-height: 500px;
+}
+
+.footer {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    border-top: 1px solid #eaeaea;
+    margin-top: 40px;
+}
+
+.footer a {
+    color: #FF8C42;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+.footer-note {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #888;
 }
 
 /* 评论区域 */
@@ -83,51 +102,6 @@ body {
     color: #495057;
 }
 
-/* Giscus 容器 */
-.giscus-container {
-    min-height: 500px;
-}
-
-/* 侧边栏 */
-.sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.info-card {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-}
-
-.info-card h3 {
-    color: #2c3e50;
-    margin-bottom: 15px;
-    font-size: 1.3em;
-}
-
-.info-card ul {
-    list-style: none;
-}
-
-.info-card li {
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
-    color: #555;
-}
-
-.info-card li:last-child {
-    border-bottom: none;
-}
-
-.status.active {
-    color: #28a745;
-    font-weight: 500;
-}
-
-/* 代码块 */
 pre {
     background: #282c34;
     color: #abb2bf;
@@ -155,7 +129,6 @@ pre {
     transform: translateY(-2px);
 }
 
-/* 网站链接 */
 .site-links {
     display: flex;
     flex-direction: column;
@@ -178,41 +151,6 @@ pre {
     transform: translateX(5px);
 }
 
-/* 页脚 */
-.footer {
-    text-align: center;
-    padding: 30px;
-    color: #666;
-    border-top: 1px solid #eaeaea;
-    margin-top: 40px;
-}
-
-.footer a {
-    color: #FF8C42;
-    text-decoration: none;
-}
-
-.footer a:hover {
-    text-decoration: underline;
-}
-
-.footer-note {
-    margin-top: 10px;
-    font-size: 0.9em;
-    color: #888;
-}
-
-/* 响应式设计 */
-@media (max-width: 1024px) {
-    .dashboard {
-        grid-template-columns: 1fr;
-    }
-    
-    .sidebar {
-        order: -1;
-    }
-}
-
 @media (max-width: 768px) {
     .header h1 {
         font-size: 2em;
@@ -222,10 +160,5 @@ pre {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
-    }
-    
-    .stats {
-        width: 100%;
-        justify-content: space-between;
     }
 }
