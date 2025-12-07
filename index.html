@@ -5,26 +5,243 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>秋风评论系统 | Qiufeng Comment</title>
     <link rel="stylesheet" href="style.css">
-    <meta name="description" content="基于 giscus 的评论系统">
+    <!-- Chart.js 用于图表 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="description" content="基于 giscus 的评论系统 - 状态监控版">
+    <style>
+        /* 仪表板样式 */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .status-indicator {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .status-up { background: #d4edda; color: #155724; }
+        .status-down { background: #f8d7da; color: #721c24; }
+        .status-checking { background: #fff3cd; color: #856404; }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 10px 0;
+            background: linear-gradient(45deg, #FF8C42, #DC442E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.95em;
+        }
+        
+        .last-updated {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 10px;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            grid-column: 1 / -1;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* 刷新按钮 */
+        .refresh-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #0366d6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #0256c4;
+        }
+        
+        .refresh-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        /* 加载动画 */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0366d6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 错误提示 */
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #dc3545;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-number {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header class="header">
             <h1>🍂 秋风评论系统</h1>
-            <p class="subtitle">Qiufeng Comment</p>
+            <p class="subtitle">Qiufeng Comment - 状态监控中心</p>
         </header>
-                
-                <!-- Giscus 评论区域 -->
-                <div class="giscus-container">
-                    <div id="giscus-main"></div>
+        
+        <!-- 控制面板 -->
+        <div class="control-panel" style="margin: 20px 0; text-align: center;">
+            <button class="refresh-btn" onclick="refreshAllStats()">
+                <span id="refresh-icon">🔄</span> 刷新所有数据
+            </button>
+            <div id="last-update-time" class="last-updated" style="margin-top: 10px;">
+                最后更新: <span id="update-time">--:--:--</span>
+            </div>
+        </div>
+        
+        <!-- 状态仪表板 -->
+        <div class="dashboard">
+            <!-- GitHub 状态 -->
+            <div class="status-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>🚀</span> GitHub 服务状态
+                    </div>
+                    <span id="github-status" class="status-indicator status-checking">检测中...</span>
                 </div>
-
+                <div id="github-status-detail">
+                    <div class="loader" style="margin: 0 auto;"></div>
+                </div>
+                <div class="last-updated">
+                    状态源: <a href="https://www.githubstatus.com/" target="_blank">GitHub Status</a>
+                </div>
+            </div>
+            
+            <!-- 评论总数 -->
+            <div class="status-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>💬</span> 评论总数
+                    </div>
+                </div>
+                <div id="total-comments" class="stat-number">--</div>
+                <div class="stat-label">累计收到评论数量</div>
+                <div class="last-updated">今日新增: <span id="today-comments">--</span> 条</div>
+            </div>
+            
+            <!-- 活跃度 -->
+            <div class="status-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>📈</span> 活跃度
+                    </div>
+                </div>
+                <div id="active-threads" class="stat-number">--</div>
+                <div class="stat-label">活跃讨论串</div>
+                <div class="last-updated">平均回复数: <span id="avg-replies">--</span></div>
+            </div>
+        </div>
+        
+        <!-- 评论趋势图表 -->
+        <div class="status-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>📊</span> 评论趋势 (最近30天)
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="commentsChart"></canvas>
+            </div>
+            <div class="last-updated" style="text-align: center;">
+                数据每24小时更新一次
+            </div>
+        </div>
+        
+        <!-- Giscus 评论区域 -->
+        <div style="margin-top: 40px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0;">
+                <h2 style="margin: 0;">💭 评论区</h2>
+                <span style="font-size: 0.9em; color: #6c757d;">欢迎留下你的想法</span>
+            </div>
+            <div class="giscus-container">
+                <div id="giscus-main"></div>
+            </div>
+        </div>
+        
         <footer class="footer">
             <p>基于 <a href="https://github.com/giscus/giscus" target="_blank">Giscus</a> | 
-                数据存储于 <a href="https://github.com/qiufengcute/Qiufeng-Comment/discussions" target="_blank">GitHub Discussions</a></p>
+                数据存储于 <a href="https://github.com/qiufengcute/Qiufeng-Comment/discussions" target="_blank">GitHub Discussions</a> |
+                <a href="https://www.githubstatus.com/" target="_blank">GitHub 状态</a>
+            </p>
         </footer>
     </div>
-
+    
+    <!-- Giscus 脚本 -->
     <script src="https://giscus.app/client.js"
         data-repo="qiufengcute/Qiufeng-Comment"
         data-repo-id="R_kgDOQkDu2Q"
@@ -40,6 +257,345 @@
         data-loading="lazy"
         crossorigin="anonymous"
         async>
+    </script>
+    
+    <!-- 状态监控脚本 -->
+    <script>
+        // 配置
+        const CONFIG = {
+            GITHUB_API: 'https://api.github.com',
+            REPO_OWNER: 'qiufengcute',
+            REPO_NAME: 'Qiufeng-Comment',
+            GITHUB_STATUS_API: 'https://www.githubstatus.com/api/v2/summary.json',
+            UPDATE_INTERVAL: 300000, // 5分钟更新一次
+            MAX_RETRIES: 3
+        };
+        
+        // 缓存
+        let cache = {
+            githubStatus: null,
+            commentsData: null,
+            lastUpdated: null
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 首次加载
+            refreshAllStats();
+            
+            // 定时更新
+            setInterval(refreshAllStats, CONFIG.UPDATE_INTERVAL);
+            
+            // 初始化图表
+            initChart();
+        });
+        
+        // 刷新所有数据
+        async function refreshAllStats() {
+            updateTime();
+            
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const icon = document.getElementById('refresh-icon');
+            const originalIcon = icon.textContent;
+            
+            // 显示加载状态
+            refreshBtn.disabled = true;
+            icon.textContent = '⏳';
+            
+            try {
+                // 并行获取所有数据
+                await Promise.all([
+                    checkGitHubStatus(),
+                    fetchCommentStats(),
+                    updateChartData()
+                ]);
+                
+                console.log('所有数据更新完成');
+            } catch (error) {
+                console.error('数据更新失败:', error);
+                showError('数据更新失败，请稍后重试');
+            } finally {
+                // 恢复按钮状态
+                refreshBtn.disabled = false;
+                icon.textContent = originalIcon;
+            }
+        }
+        
+        // 检查 GitHub 状态
+        async function checkGitHubStatus(retryCount = 0) {
+            const statusElement = document.getElementById('github-status');
+            const detailElement = document.getElementById('github-status-detail');
+            
+            statusElement.className = 'status-indicator status-checking';
+            statusElement.textContent = '检测中...';
+            
+            try {
+                const response = await fetch(CONFIG.GITHUB_STATUS_API);
+                if (!response.ok) throw new Error('GitHub Status API 请求失败');
+                
+                const data = await response.json();
+                cache.githubStatus = data;
+                
+                // 检查主要服务状态
+                const components = data.components;
+                const incidents = data.incidents;
+                
+                // 检查是否有活跃的故障
+                const activeIncidents = incidents.filter(incident => incident.status !== 'resolved');
+                
+                if (activeIncidents.length > 0) {
+                    // 有故障
+                    statusElement.className = 'status-indicator status-down';
+                    statusElement.textContent = '部分故障';
+                    
+                    detailElement.innerHTML = `
+                        <div class="error-message">
+                            <strong>⚠️ 当前有 ${activeIncidents.length} 个活跃故障:</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                ${activeIncidents.slice(0, 3).map(incident => 
+                                    `<li>${incident.name} (${incident.status})</li>`
+                                ).join('')}
+                            </ul>
+                            ${activeIncidents.length > 3 ? '<p>... 还有更多故障</p>' : ''}
+                        </div>
+                    `;
+                } else {
+                    // 一切正常
+                    statusElement.className = 'status-indicator status-up';
+                    statusElement.textContent = '运行正常';
+                    
+                    // 显示组件状态
+                    const criticalComponents = components.filter(comp => 
+                        ['API', 'Git Operations', 'Issues', 'Discussions'].includes(comp.name)
+                    );
+                    
+                    detailElement.innerHTML = `
+                        <div style="color: #155724;">
+                            <p><strong>✅ 所有系统运行正常</strong></p>
+                            <p style="margin-top: 10px; font-size: 0.9em;">
+                                关键服务状态:
+                                ${criticalComponents.map(comp => 
+                                    `<span style="display: inline-block; margin-right: 10px; color: ${comp.status === 'operational' ? '#28a745' : '#dc3545'}">
+                                        ${comp.name}: ${comp.status === 'operational' ? '✓' : '✗'}
+                                    </span>`
+                                ).join('')}
+                            </p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                if (retryCount < CONFIG.MAX_RETRIES) {
+                    console.log(`重试 GitHub 状态检测 (${retryCount + 1}/${CONFIG.MAX_RETRIES})`);
+                    setTimeout(() => checkGitHubStatus(retryCount + 1), 2000);
+                    return;
+                }
+                
+                statusElement.className = 'status-indicator status-down';
+                statusElement.textContent = '检测失败';
+                detailElement.innerHTML = `
+                    <div class="error-message">
+                        <p>无法获取 GitHub 状态信息</p>
+                        <p style="font-size: 0.9em;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 获取评论统计
+        async function fetchCommentStats(retryCount = 0) {
+            try {
+                const response = await fetch(
+                    `${CONFIG.GITHUB_API}/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/discussions`,
+                    {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    if (response.status === 403 && retryCount < CONFIG.MAX_RETRIES) {
+                        // API 限制，等待后重试
+                        console.log('API 限制，等待重试...');
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        return fetchCommentStats(retryCount + 1);
+                    }
+                    throw new Error(`GitHub API 错误: ${response.status}`);
+                }
+                
+                const discussions = await response.json();
+                cache.commentsData = discussions;
+                
+                // 计算统计
+                const totalComments = discussions.length;
+                
+                // 计算今日新增
+                const today = new Date().toISOString().split('T')[0];
+                const todayComments = discussions.filter(disc => {
+                    const createdDate = new Date(disc.created_at).toISOString().split('T')[0];
+                    return createdDate === today;
+                }).length;
+                
+                // 计算活跃讨论和平均回复数
+                const activeDiscussions = discussions.filter(disc => {
+                    const updatedDate = new Date(disc.updated_at);
+                    const daysSinceUpdate = (new Date() - updatedDate) / (1000 * 60 * 60 * 24);
+                    return daysSinceUpdate < 7; // 一周内更新过的算活跃
+                });
+                
+                const totalReplies = discussions.reduce((sum, disc) => sum + disc.comments, 0);
+                const avgReplies = totalComments > 0 ? (totalReplies / totalComments).toFixed(1) : 0;
+                
+                // 更新UI
+                document.getElementById('total-comments').textContent = totalComments;
+                document.getElementById('today-comments').textContent = todayComments;
+                document.getElementById('active-threads').textContent = activeDiscussions.length;
+                document.getElementById('avg-replies').textContent = avgReplies;
+                
+            } catch (error) {
+                if (retryCount < CONFIG.MAX_RETRIES) {
+                    console.log(`重试评论统计 (${retryCount + 1}/${CONFIG.MAX_RETRIES})`);
+                    setTimeout(() => fetchCommentStats(retryCount + 1), 2000);
+                    return;
+                }
+                
+                console.error('获取评论统计失败:', error);
+                document.getElementById('total-comments').textContent = '错误';
+                document.getElementById('today-comments').textContent = '--';
+                document.getElementById('active-threads').textContent = '--';
+                document.getElementById('avg-replies').textContent = '--';
+                
+                showError('无法获取评论统计信息');
+            }
+        }
+        
+        // 图表相关
+        let commentsChart = null;
+        
+        function initChart() {
+            const ctx = document.getElementById('commentsChart').getContext('2d');
+            
+            commentsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '每日评论数',
+                        data: [],
+                        borderColor: '#FF8C42',
+                        backgroundColor: 'rgba(255, 140, 66, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function updateChartData() {
+            try {
+                // 获取最近30天的评论数据
+                const discussions = cache.commentsData || [];
+                
+                // 按日期分组
+                const last30Days = [];
+                const now = new Date();
+                
+                // 生成最近30天的日期标签
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date(now);
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    last30Days.push(dateStr);
+                }
+                
+                // 统计每天的评论数
+                const dailyComments = {};
+                last30Days.forEach(date => {
+                    dailyComments[date] = 0;
+                });
+                
+                discussions.forEach(discussion => {
+                    const createdDate = new Date(discussion.created_at).toISOString().split('T')[0];
+                    if (dailyComments.hasOwnProperty(createdDate)) {
+                        dailyComments[createdDate]++;
+                    }
+                });
+                
+                // 准备图表数据
+                const labels = last30Days.map(date => {
+                    const d = new Date(date);
+                    return `${(d.getMonth() + 1)}/${d.getDate()}`;
+                });
+                
+                const data = last30Days.map(date => dailyComments[date]);
+                
+                // 更新图表
+                if (commentsChart) {
+                    commentsChart.data.labels = labels;
+                    commentsChart.data.datasets[0].data = data;
+                    commentsChart.update();
+                }
+                
+            } catch (error) {
+                console.error('更新图表数据失败:', error);
+            }
+        }
+        
+        // 辅助函数
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('update-time').textContent = timeStr;
+            cache.lastUpdated = now;
+        }
+        
+        function showError(message) {
+            // 可以添加全局错误提示
+            console.error('系统错误:', message);
+        }
+        
+        // 页面可见性检测 - 当页面重新可见时刷新数据
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                refreshAllStats();
+            }
+        });
     </script>
 </body>
 </html>
